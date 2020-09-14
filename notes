@@ -243,7 +243,8 @@ EOF
 version() {
   local name=$(basename $0)
 	cat <<EOF
-$name $notes_version
+$name $notes_version (custom)
+https://github.com/colbertz2/notes
 EOF
 }
 
