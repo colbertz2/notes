@@ -251,17 +251,11 @@ main() {
     local ret=0
     local cmd=""
 
-    if [ -z "$1" ]; then
-        printf "No command specified\n\n"
-        usage
-        exit 1
-    fi
-
     case "$1" in
         "new"|"n" )
             cmd="new_note"
             ;;
-        "ls" )
+        "ls"|"" )
             cmd="ls_notes"
             ;;
         "search"|"s" )
