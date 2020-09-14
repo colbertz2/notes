@@ -276,7 +276,7 @@ main() {
         "cat" )
             cmd="handle_multiple_notes cat"
             ;;
-        --help | -help | -h )
+        "help" | --help | -help | -h )
             cmd="usage"
             ;;
         --version | -version )
