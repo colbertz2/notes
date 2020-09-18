@@ -50,6 +50,18 @@ ls_notes() {
     fi
 }
 
+tree_notes() {
+	local tree_output=$(tree "$notes_dir/$*" 2>&1)
+	local tree_result=$?
+
+	if [[ $tree_result == 0 && "$tree_output" ]]; then
+		printf "$tree_output\n"
+		return 0
+	else
+		return 2
+	fi
+}	
+
 search_filenames_and_contents() {
     if [ "$#" -gt 0 ]; then
         find_output=$(find "$notes_dir" -type f -exec bash -c \
@@ -259,6 +271,9 @@ main() {
         "ls"|"" )
             cmd="ls_notes"
             ;;
+        "tree"|"t" )
+        	cmd="tree_notes"
+			;;
         "search"|"s" )
             cmd="search_filenames_and_contents"
             ;;
