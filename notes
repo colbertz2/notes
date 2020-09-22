@@ -30,6 +30,11 @@ without_notes_dir() {
     cat | sed -e "s/^$escaped_notes_dir//g" | sed -E "s/^\/+//g"
 }
 
+sync_notes() {
+	echo "sync_notes() not yet implemented" >&2
+	return 2
+}
+
 ls_notes() {
     local ls_output=$(ls -p "$notes_dir/$*" 2>&1 | grep -v "~$")
     local ls_result=$?
@@ -232,6 +237,7 @@ usage() {
 $name is a command line note taking tool.
 
 Usage:
+    $name sync                            # Syncs notes using git
     $name new|n <name>                    # Create a new note
     $name ls <pattern>                    # List notes by path
     $name find|f [pattern]                # Search notes by filename and path
@@ -265,6 +271,9 @@ main() {
     local cmd=""
 
     case "$1" in
+		"sync")
+			cmd="sync_notes"
+			;;
         "new"|"n" )
             cmd="new_note"
             ;;
