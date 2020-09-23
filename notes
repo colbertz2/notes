@@ -31,8 +31,129 @@ without_notes_dir() {
 }
 
 sync_notes() {
-	echo "sync_notes() not yet implemented" >&2
-	return 2
+	GIT_WRAP="git -C $notes_dir"
+
+	# fail if notes_dir isn't a git repo already
+	$GIT_WRAP rev-parse --is-inside-work-tree &>/dev/null
+	isRepo=$?
+
+	if [ $isRepo -ne 0 ]; then
+		echo "fatal: $notes_dir is not a git repository" >&2
+		return 2
+	fi
+
+	# Get currently checked out branch
+	cb=$($GIT_WRAP symbolic-ref --short HEAD)
+
+	# If not on master branch, confirm before syncing
+	SKIP_CONFIRM_FILE="$notes_dir/.sync-confirm"
+	SKIP=-5
+	
+	if [ -f $SKIP_CONFIRM_FILE ]; then
+		if [ $(cat $SKIP_CONFIRM_FILE) == $cb ]; then
+			SKIP=0	# skip confirmation, we've seen this branch before
+		fi
+	fi
+	
+	if [ $cb != "master" ] && [ $SKIP -ne 0 ]; then
+		printf "WARNING: $cb branch is currently checked out. Proceed?\n" >&2
+		printf "    y - yes\n" >&2
+		printf "    a - always\n" >&2
+		printf "    n - no\n"  >&2
+		printf "> " >&2
+
+		read confirm
+
+		case $confirm in
+			"y")
+				:	# do nothing, proceed to git stuff
+				;;
+			"a")
+				echo "$cb" > $SKIP_CONFIRM_FILE	# skip confirmation in future
+				# proceed to git stuff
+				;;
+			*)
+				printf "Sync cancelled.\n" >&2
+				return 1	# return early, don't sync
+				;;
+		esac
+	fi
+
+	commit_result=-5
+	pull_result=-5
+	push_result=-5
+	sync_result=-5
+
+	# commmit all changes
+	diffs=$($GIT_WRAP status --porcelain | sed 's/^...//')
+	if [[ ! -z $diffs ]]; then
+		# Some files need to be committed!
+		$GIT_WRAP add -A &>/dev/null
+		
+		mac_addr=$(ip -o link | grep ether | 
+			grep "state UP" | awk '{ print $17 }')
+
+		commit_msg="
+notes sync automated commit
+
+ - host: $(hostname)
+ - user: $(printenv USER)
+ - mac : $mac_addr
+
+The following files changed:
+$diffs"
+
+		commit_out=$($GIT_WRAP commit -m "$commit_msg")
+		commit_result=$?
+
+		if [ $commit_result -ne 0 ]; then
+			printf "Sync failed at commit step.\n" >&2
+			printf "%s\n" $commit_out >&2
+			$GIT_WRAP reset
+			return 1
+		fi
+	else
+		commit_result=0
+	fi
+
+	# pull first
+	$GIT_WRAP pull &>/dev/null
+	pull_result=$?
+
+	if [ $pull_result -ne 0 ]; then
+		printf "Sync failed at pull step.\n" >&2
+		return 1
+	fi
+
+	# handle conflicts
+
+	# then push
+	{
+		$GIT_WRAP push &>/dev/null
+		push_result=$?
+	} || {
+		$GIT_WRAP push -u origin $cb &>/dev/null
+		push_result=$?
+	}
+
+	if [ $push_result -ne 0 ]; then
+		printf "Sync failed at push step.\n" >&2
+		return 1
+	fi
+
+	# Final check and generate return value
+	[ $commit_result -eq 0 ] &&
+		[ $pull_result -eq 0 ] &&
+		[ $push_result -eq 0 ]
+	sync_result=$?
+
+	if [ $sync_result -ne 0 ]; then
+		printf "Sync failed.\n" >&2
+		return 1
+	fi
+
+	printf "Sync successful.\n" >&2
+	return 0
 }
 
 ls_notes() {
