@@ -51,6 +51,11 @@ Removes \fINAME\fR. If \-r or \-\-recursive is given, folders will be removed.
 .BR cat " " \fINAME\fR
 Display note \fINAME\fR. \fINAME\fR can either be an absolute path or relative
 to $NOTES_DIRECTORY.
+.TP
+.BR sync
+Sync contents of $NOTES_DIRECTORY with a remote git repository.
+A git repository MUST be initialized and configured with a remote "origin"
+before the sync command will work.
 .SH AUTHORS
 Notes was created by Tim Perry, who is still the maintainer. Numerous
 contributions have been submitted via pull requests on github.
