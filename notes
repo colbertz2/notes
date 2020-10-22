@@ -43,9 +43,9 @@ sync_notes() {
 	fi
 	
 	# fail if not connected to network
-	ip -o link | grep ether | grep "state UP" 2>&1 >/dev/null
+	ip -o link | grep ether | grep "state UP" >/dev/null
 	netConnected=$?
-	if [ -n $netConnected ]; then
+	if [ -z $netConnected ]; then
 		echo "fatal: not connected to network" >&2
 		return 2
 	fi
