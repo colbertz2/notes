@@ -41,6 +41,14 @@ sync_notes() {
 		echo "fatal: $notes_dir is not a git repository" >&2
 		return 2
 	fi
+	
+	# fail if not connected to network
+	ip -o link | grep ether | grep "state UP" 2>&1 >/dev/null
+	netConnected=$?
+	if [ -n $netConnected ]; then
+		echo "fatal: not connected to network" >&2
+		return 2
+	fi
 
 	# Get currently checked out branch
 	cb=$($GIT_WRAP symbolic-ref --short HEAD)
